@@ -15,6 +15,8 @@
  *
  * =====================================================================================
  */
+#define _GNU_SOURCE
+
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -66,6 +68,7 @@ void music_play(const char *music_name)
 		}
 	} else {
 		pid_t mplayer_pid = pid;
+		pid_t lrc_pid;
 		usleep(1);
 		xclose(pipefd[1]);
 
@@ -75,10 +78,9 @@ void music_play(const char *music_name)
 				break;
 			memset(output, '\0', BUFSIZ);
 		}
-
 		if (lrc == 1) {
-			pid = xfork();
-			if (pid == 0) {
+			lrc_pid = xfork();
+			if (lrc_pid == 0) {
 				struct sigaction act;
 
 				memset(&act, '\0', sizeof(act));
@@ -86,7 +88,7 @@ void music_play(const char *music_name)
 				sigaction(SIGTERM, &act, NULL);
 				xclose(STDIN_FILENO);
 				analyze_lrc(filename);
-				printf("\nlrc ended\n");
+				printf("\n                lrc ended\n");
 				exit(EXIT_SUCCESS);
 			}
 		} else
@@ -94,13 +96,15 @@ void music_play(const char *music_name)
 
 		while ((len = read(pipefd[0], output, BUFSIZ)) > 0) {
 			write(STDOUT_FILENO, output, len);
+			if (strcasestr(output, "Exiting") != NULL)
+				if (lrc == 1) {
+					kill(lrc_pid, SIGTERM);
+					waitpid(lrc_pid, NULL, 0);
+				}
 			memset(output, '\0', BUFSIZ);
 		}
 
 		waitpid(mplayer_pid, NULL, 0);
-		/* mplayer is terminated, so kill the lrc process   */
-		kill(pid, SIGTERM);
-		waitpid(pid, NULL, 0);
 	}
 
 	return;

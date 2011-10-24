@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
+#include "gbk.h"
 #include "cue.h"
 #include "common.h"
 #include "wildcard.h"
@@ -36,7 +37,7 @@ struct cue_info {
 };
 
 struct cue_info *cue_index;
-
+static int num_track;
 /* If suffix is ".cue", return 1,
  * otherwise return 0 */
 int is_cue_file(const char *name)
@@ -97,7 +98,8 @@ void cue_play(const char *name)
 	pid_t pid;
 	pid = xfork();
 	if (pid == 0) {
-		execlp("mplayer", "mplayer", name, (char *)0);
+		execlp("mplayer", "mplayer", "-slave", "-quiet", name,
+		       (char *)0);
 		fprintf(stderr, "execlp failure: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
@@ -117,10 +119,14 @@ int analyze_cue(const char *name)
 	char *performer;
 	char *track;
 	char *temp;
+	const char *temp_filename;
 	size_t len;
 	size_t read_count;
 
-	fp = fopen(name, "r");
+	temp_filename = gbk_utf(name);
+	fp = fopen(temp_filename, "r");
+	if (!fp)
+		fprintf(stderr, "%s\n", strerror(errno));
 	assert(fp != NULL);
 
 	/* get the total tracks in cue file */
@@ -128,17 +134,20 @@ int analyze_cue(const char *name)
 		if ((track = strstr(line, "TRACK")) != NULL)
 			count++;
 	}
+	/* Recording the total tracks into global variable. */
+	num_track = count;
 	fclose(fp);
 
 	cue_index = malloc(count * sizeof(struct cue_info));
 	assert(cue_index != NULL);
 	count = 0;
-	fp = fopen(name, "r");
+	fp = fopen(temp_filename, "r");
 	assert(fp != NULL);
 
 	while ((read_count = getline(&line, &len, fp)) != -1) {
 		if ((track = strstr(line, "TRACK")) != NULL) {
 			flag = 1;
+			assert(track != NULL);
 			track = track + 6;
 			strncpy(cue_index[count].track, track, 2);
 			cue_index[count].track[2] = '\0';
@@ -151,8 +160,8 @@ int analyze_cue(const char *name)
 				temp = strrchr(title, '"');
 				assert(temp != NULL);
 				title++;
-				strncpy(cue_index[count - 1].title, title,
-					temp - title);
+				strncpy(cue_index[count - 1].title,
+					title, temp - title);
 				cue_index[count - 1].title[temp - title] = '\0';
 			}
 
@@ -164,9 +173,8 @@ int analyze_cue(const char *name)
 				performer++;
 				strncpy(cue_index[count - 1].performer,
 					performer, temp - performer);
-				cue_index[count - 1].performer[temp -
-							       performer] =
-				    '\0';
+				cue_index[count - 1].performer[temp - performer]
+				    = '\0';
 			}
 
 			if ((index = strstr(line, "INDEX 01 ")) != NULL) {
@@ -178,10 +186,7 @@ int analyze_cue(const char *name)
 	}
 
 	fclose(fp);
-	fflush(stdout);
-	fflush(stderr);
-	free(line);
-	free(cue_index);
+	unlink(temp_filename);
 
 	return 0;
 }
@@ -189,17 +194,34 @@ int analyze_cue(const char *name)
 int cue(const char *name)
 {
 	char *rval;
+	char *last_slash;
+	int loop;
+
+	if (!name || !*name)
+		return -1;
 
 	rval = get_file_name(name);
 	if (rval == NULL) {
-		fprintf(stderr, "lossless file NOT found\n");
+		last_slash = strrchr(name, '/');
+		last_slash++;
+		fprintf(stderr, "\n'%s': lossless file NOT found\n\n", last_slash);
 		return -1;
 	}
 
 	analyze_cue(name);
-	cue_play(rval);
-	free(rval);
 
+	for (loop = 0; loop < num_track; loop++) {
+		printf("%s ", cue_index[loop].track);
+		printf("%s ", cue_index[loop].time);
+		printf(" %s ", cue_index[loop].performer);
+		printf("%s\n", cue_index[loop].title);
+	}
+	putchar('\n');
+	cue_play(rval);
 	wait(NULL);
+
+	free(rval);
+	free(cue_index);
+
 	return 0;
 }

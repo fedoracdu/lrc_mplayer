@@ -1,20 +1,3 @@
-/*
- * =====================================================================================
- *
- *       Filename:  wildcard.h
- *
- *    Description:  header of wildcard.c
- *
- *        Version:  1.0
- *        Created:  09/07/2011 08:53:48 PM
- *       Revision:  none
- *       Compiler:  gcc
- *
- *         Author:  yanliang (), fedoracdu@gmail.com
- *        Company:
- *
- * =====================================================================================
- */
 #define FILE_MAX 512
 
 #include <unistd.h>

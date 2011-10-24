@@ -16,9 +16,9 @@
  * =====================================================================================
  */
 #include <errno.h>
-#include <assert.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <assert.h>
 #include <signal.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -55,7 +55,7 @@ int have_lrc(const char *name)
 
 	assert(name != NULL);
 
-	/* Reset filename. */
+	/* Reseting filename to let it be empty */
 	memset(filename, '\0', sizeof(filename));
 	if (is_absolute_path(name)) {
 		last_slash = strrchr(name, '/');
@@ -176,7 +176,7 @@ int analyze_lrc(const char *name)
 
 		suffix++;
 		usleep((min + sec + u_sec / 100.0) * 1000000 - pre_time);
-		printf("                  %s\n", suffix);
+		printf("               %s\n", suffix);
 		pre_time = (min + sec + u_sec / 100.0) * 1000000;
 	}
 

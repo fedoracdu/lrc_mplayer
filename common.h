@@ -1,20 +1,3 @@
-/*
- * =====================================================================================
- *
- *       Filename:  common.h
- *
- *    Description:  header of common.c
- *
- *        Version:  1.0
- *        Created:  09/07/2011 08:23:47 PM
- *       Revision:  none
- *       Compiler:  gcc
- *
- *         Author:  yanliang (), fedoracdu@gmail.com
- *        Company:
- *
- * =====================================================================================
- */
 int is_absolute_path(const char *pathname);
 
 char *convert_to_absolute_path(const char *name);
