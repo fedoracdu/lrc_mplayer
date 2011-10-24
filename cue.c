@@ -91,6 +91,17 @@ char *get_file_name(const char *name)
 		return rval;
 }
 
+/* print the cue info */
+void print_cue_index(void)
+{
+	int loop;
+	for (loop = 0; loop < num_track; loop++) {
+		printf("%s ", cue_index[loop].track);
+		printf(" %s ", cue_index[loop].performer);
+		printf("%s\n", cue_index[loop].title);
+	}
+}
+
 /* forking a child process to play the
  * losssless file */
 void cue_play(const char *name)
@@ -102,6 +113,9 @@ void cue_play(const char *name)
 		       (char *)0);
 		fprintf(stderr, "execlp failure: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
+	} else {
+		usleep(100000);
+        print_cue_index();
 	}
 
 	return;
@@ -195,7 +209,6 @@ int cue(const char *name)
 {
 	char *rval;
 	char *last_slash;
-	int loop;
 
 	if (!name || !*name)
 		return -1;
@@ -204,19 +217,13 @@ int cue(const char *name)
 	if (rval == NULL) {
 		last_slash = strrchr(name, '/');
 		last_slash++;
-		fprintf(stderr, "\n'%s': lossless file NOT found\n\n", last_slash);
+		fprintf(stderr, "\n'%s': lossless file NOT found\n\n",
+			last_slash);
 		return -1;
 	}
 
 	analyze_cue(name);
 
-	for (loop = 0; loop < num_track; loop++) {
-		printf("%s ", cue_index[loop].track);
-		printf("%s ", cue_index[loop].time);
-		printf(" %s ", cue_index[loop].performer);
-		printf("%s\n", cue_index[loop].title);
-	}
-	putchar('\n');
 	cue_play(rval);
 	wait(NULL);
 
