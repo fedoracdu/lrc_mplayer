@@ -1,4 +1,4 @@
 This program is very simple. It's an enhancement of mplayer, so you should
 install mplayer firstly. Now it can display lrc, which is encoded to UTF-8.
-Besides, it can play blury directory, like this: lrc_mplayer <bluray-direcotry>.
+Besides, it can play blury directory, like this: lrc <bluray-direcotry>.
 Now can open cue file encoded with GBK.
