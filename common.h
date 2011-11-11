@@ -1,4 +1,4 @@
-int is_absolute_path(const char *pathname);
+int is_absolute_path(const char *name);
 
 char *convert_to_absolute_path(const char *name);
 

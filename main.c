@@ -25,12 +25,12 @@
 #include "wildcard.h"
 #include "music_play.h"
 
-static const char usage[] = "main <filename>\n";
+static const char usage[] = "lrc <filename>\n";
 
 int main(int argc, const char **argv)
 {
 	int i = 0;
-	char *name;
+	const char *name;
 
 	if (argc < 2) {
 		fprintf(stderr, "%s", usage);
