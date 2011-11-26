@@ -48,13 +48,8 @@ char *convert_to_absolute_path(const char *name)
 	char *rval;
 	char cwd[BUFSIZ];
 
-	if (is_absolute_path(name)) {
-		rval = xmalloc(strlen(name) + 1);
-		strcpy(rval, name);
-		rval[strlen(rval)] = '\0';
-
-		return rval;
-	}
+	if (is_absolute_path(name))
+		return (char *)name;
 
 	xgetcwd(cwd, BUFSIZ);
 	if (cwd != NULL) {
@@ -112,10 +107,8 @@ ssize_t xread(int fd, void *buf, size_t count)
 	ssize_t rval;
 
 	rval = read(fd, buf, count);
-	if (rval == -1) {
+	if (rval == -1)
 		err_puts("read", errno);
-		exit(EXIT_FAILURE);
-	}
 
 	return rval;
 }

@@ -48,19 +48,20 @@ const char *gbk_utf(const char *name)
 		return NULL;
 	}
 
-	/* Make the temporary filename  */
+	/* Make the temporary file name  */
 	last_slash = strrchr(name, '/');
-	if (last_slash == NULL)
-		return NULL;
 	last_slash++;
+
 	temp_filename = calloc(strlen(name) + 2, sizeof(char));
 	assert(temp_filename != NULL);
+
 	strncpy(temp_filename, name, last_slash - name);
 	temp_filename[strlen(temp_filename)] = '.';
 	strncat(temp_filename, last_slash, strlen(last_slash));
 	temp_filename[strlen(temp_filename)] = '\0';
 
-	fd = open(temp_filename, O_RDWR | O_CREAT, S_IRUSR);
+	fd = open(temp_filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+
 	if (fd == -1) {
 		fprintf(stderr, "open '%s' failure: %s\n", temp_filename,
 			strerror(errno));
@@ -86,14 +87,18 @@ const char *gbk_utf(const char *name)
 		if (outbuf == NULL) {
 			fprintf(stderr, "calloc failure: %s\n",
 				strerror(errno));
-			return NULL;
+			exit(EXIT_FAILURE);
 		} else
 			out = outbuf;
 
 		rval = iconv(cd, &in, &insize, &outbuf, &outsize);
-		if (rval == (size_t) - 1) {
-			fprintf(stderr, "iconv: %s\n", strerror(errno));
-			return NULL;
+		if (rval == (size_t) -1) {
+			free(out);
+			iconv_close(cd);
+			close(fd);
+			fclose(fp);
+            unlink(temp_filename);
+			return name;
 		}
 
 		write(fd, out, strlen(out) + 1);
@@ -101,8 +106,8 @@ const char *gbk_utf(const char *name)
 
 	free(out);
 	iconv_close(cd);
-	close(fd);
 	fclose(fp);
+	close(fd);
 
 	return temp_filename;
 }

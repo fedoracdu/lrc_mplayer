@@ -15,6 +15,8 @@
  *
  * =====================================================================================
  */
+#define _GNU_SOURCE
+
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -115,7 +117,7 @@ void cue_play(const char *name)
 		exit(EXIT_FAILURE);
 	} else {
 		usleep(100000);
-        print_cue_index();
+		print_cue_index();
 	}
 
 	return;
@@ -200,7 +202,6 @@ int analyze_cue(const char *name)
 	}
 
 	fclose(fp);
-	unlink(temp_filename);
 
 	return 0;
 }
