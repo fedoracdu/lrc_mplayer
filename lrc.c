@@ -86,8 +86,8 @@ int have_lrc(const char *name)
 	/* get the length of filename withou '.mp3' suffix.      */
 	len = suffix - music_name;
 	/* 20 is the sum of length of '/home/vim/' and lenght
-     * of mp3 file name without suffix.
-     */
+	 * of mp3 file name without suffix.
+	 */
 	if (len < NAME_LEN - 20) {
 		strncat(filename, music_name, len);
 		strncat(filename, ".lrc", 4);
@@ -148,7 +148,7 @@ int lrc_time(const char *time)
 int analyze_lrc(const char *name)
 {
 	FILE *fp;
-    char *last_slash = NULL;
+	char *last_slash = NULL;
 	char *line = NULL;
 	long pre_time = 0;
 	size_t len = 0;
@@ -161,13 +161,13 @@ int analyze_lrc(const char *name)
 	}
 
 	/* Delete the temporary file.   */
-    last_slash = strrchr(name, '/');
-    last_slash++;
-    if (*last_slash == '.') {
-        unlink(name);
-        if (access(name, F_OK) == 0)
-            unlink(name);
-    }
+	last_slash = strrchr(name, '/');
+	last_slash++;
+	if (*last_slash == '.') {
+		unlink(name);
+		if (access(name, F_OK) == 0)
+			unlink(name);
+	}
 
 	putchar('\n');
 	/* Read line by line.    */

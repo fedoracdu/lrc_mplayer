@@ -38,31 +38,32 @@ void music_play(const char *music_name)
 {
 	int lrc;
 	int rval;
-	ssize_t len;
 	int pipefd[2];
-	char mplayer_output[BUFSIZ];
+	char cmd[BUFSIZ];
 	pid_t pid;
 
 	lrc_mkdir();
 	rval = xpipe(pipefd);
-	pid = xfork();
 	lrc = have_lrc(music_name);
+
+	pid = xfork();
 	if (pid == 0) {		/* child process: exec mplayer.  */
 		if (rval == -1) {
 			execlp("mplayer", "mplayer", music_name, (char *)0);
 			perror("execlp error");
 			exit(EXIT_FAILURE);
 		} else {
-			xclose(pipefd[0]);
-			xclose(STDOUT_FILENO);
-			dup(pipefd[1]);
+			xclose(pipefd[1]);
 
-            if (lrc == 0) {
-			execlp("mplayer", "mplayer", "-slave", "-quiet",
-			       music_name, (char *)0);
-            } else {
-                execlp("mplayer", "mplayer", music_name, (char *)0);
-            }
+			if (lrc == 0) {
+				/* redirect the stin of mplayer. */
+				dup2(pipefd[0], STDIN_FILENO);
+				execlp("mplayer", "mplayer", "-slave", "-quiet",
+				       music_name, (char *)0);
+			} else {
+				execlp("mplayer", "mplayer", music_name,
+				       (char *)0);
+			}
 
 			perror("execlp error");
 			exit(EXIT_FAILURE);
@@ -72,15 +73,7 @@ void music_play(const char *music_name)
 		pid_t mplayer_pid = pid;
 		pid_t lrc_pid = -1;
 		const char *tmp_filename = NULL;
-		xclose(pipefd[1]);
-
-		/* read the output of mplayer, then print it.    */
-		while ((len = xread(pipefd[0], mplayer_output, BUFSIZ)) > 0) {
-			xwrite(STDOUT_FILENO, mplayer_output, len);
-			if (strstr(mplayer_output, "Starting playback") != NULL)
-				break;
-			memset(mplayer_output, '\0', BUFSIZ);
-		}
+		xclose(pipefd[0]);
 
 		/* If the music has lrc, then fork a process to display.         */
 		if (lrc == 0) {
@@ -108,19 +101,24 @@ void music_play(const char *music_name)
 				printf("\n               lrc ended\n");
 
 				exit(EXIT_SUCCESS);
+			} else {
+                usleep(1);
+
+		        dup2(pipefd[1], STDOUT_FILENO);
+				while ((fgets(cmd, BUFSIZ, stdin)) != NULL) {
+					printf("%s", cmd);
+                    if ((strstr(cmd, "quit")) != NULL) {
+                        kill(lrc_pid, SIGTERM);
+                        wait(NULL);
+                        break;
+                    }
+                    memset(cmd, '\0', BUFSIZ);
+					fflush(stdout);
+				}
+                wait(NULL);
 			}
 		} else
 			printf("\nlrc NOT found\n\n");
-
-		while ((len = read(pipefd[0], mplayer_output, BUFSIZ)) > 0) {
-			write(STDOUT_FILENO, mplayer_output, len);
-			if (strcasestr(mplayer_output, "Exiting") != NULL)
-				if (lrc == 0) {
-					kill(lrc_pid, SIGTERM);
-					waitpid(lrc_pid, NULL, 0);
-				}
-			memset(mplayer_output, '\0', BUFSIZ);
-		}
 
 		waitpid(mplayer_pid, NULL, 0);
 	}
