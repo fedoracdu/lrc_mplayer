@@ -38,7 +38,7 @@ int bluray(const char *dir_name)
 	DIR *dir;
 	struct stat buf;
 	struct dirent *dirp;
-	char *rval;
+	char *rval = NULL;
 	pid_t pid;
 
 	if (!dir_name || !*dir_name)

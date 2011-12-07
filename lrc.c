@@ -39,33 +39,27 @@
 
 #define LRC_DIR_PER S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH
 
-char filename[NAME_LEN];
+char lrc_name[NAME_LEN];
 
 char **lrc_content;
 
 /* the lrc direcotry.	*/
 static char lrc_dir[LRC_DIR_LEN];
 
-/* For sigaction */
-void reset_filename(int signum)
-{
-	exit(EXIT_SUCCESS);
-}
-
-/* Check whether existing lrc file in direcotry '$HOME/.lrc'.
+/* Checking lrc file according music lrc_name exists or not.
  * if exists, return 0, otherwise return -1.
  */
 int have_lrc(const char *name)
 {
-	char *suffix;
+	char *suffix = NULL;
 	size_t len;
 	char music_name[NAME_LEN];
-	char *home;
+	char *home = NULL;
 	const char *last_slash = NULL;
 
 	assert(name != NULL);
 
-	memset(filename, '\0', NAME_LEN);
+	memset(lrc_name, '\0', NAME_LEN);
 	last_slash = strrchr(name, '/');
 	last_slash++;
 
@@ -82,20 +76,22 @@ int have_lrc(const char *name)
 	if (!name)
 		return -1;
 
-	snprintf(filename, strlen(home) + 7, "%s/.lrc/", home);
-	/* get the length of filename withou '.mp3' suffix.      */
+	snprintf(lrc_name, strlen(home) + 7, "%s/.lrc/", home);
 	len = suffix - music_name;
-	/* 20 is the sum of length of '/home/vim/' and lenght
-	 * of mp3 file name without suffix.
-	 */
 	if (len < NAME_LEN - 20) {
-		strncat(filename, music_name, len);
-		strncat(filename, ".lrc", 4);
-		filename[strlen(filename)] = '\0';
+		strncat(lrc_name, music_name, len);
+		strncat(lrc_name, ".lrc", 4);
+		lrc_name[strlen(lrc_name)] = '\0';
+	} else {
+		fprintf(stderr, "file name is too long\n");
+		exit(EXIT_FAILURE);
 	}
 
-	if (access(filename, F_OK) == -1)
+	if (access(lrc_name, F_OK) == -1) {
+		fprintf(stderr, "\nLrc NOT found!!!\n\n");
+		usleep(900000);
 		return -1;
+	}
 
 	return 0;
 }
@@ -230,7 +226,7 @@ int analyze_lrc(const char *name)
 	putchar('\n');
 	free(line);
 
-	memset(filename, '\0', NAME_LEN);
+	memset(lrc_name, '\0', NAME_LEN);
 
 	return 0;
 }

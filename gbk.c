@@ -92,12 +92,12 @@ const char *gbk_utf(const char *name)
 			out = outbuf;
 
 		rval = iconv(cd, &in, &insize, &outbuf, &outsize);
-		if (rval == (size_t) -1) {
+		if (rval == (size_t) - 1) {
 			free(out);
 			iconv_close(cd);
 			close(fd);
 			fclose(fp);
-            unlink(temp_filename);
+			unlink(temp_filename);
 			return name;
 		}
 
